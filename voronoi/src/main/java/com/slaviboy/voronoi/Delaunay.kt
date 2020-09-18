@@ -180,7 +180,7 @@ class Delaunay(vararg var coordinates: Double) {
 
     }
 
-    fun find(x: Double, y: Double, i: Int = 0): Int {
+    internal fun find(x: Double, y: Double, i: Int = 0): Int {
         if (x.isNaN() || y.isNaN()) {
             return -1
         }
@@ -194,7 +194,7 @@ class Delaunay(vararg var coordinates: Double) {
         return c
     }
 
-    fun step(i: Int, x: Double, y: Double): Int {
+    internal fun step(i: Int, x: Double, y: Double): Int {
         if (inedges[i] == -1 || coordinates.isEmpty()) {
             return (i + 1) % (coordinates.size shr 1)
         }
@@ -238,9 +238,9 @@ class Delaunay(vararg var coordinates: Double) {
     }
 
     /**
-     * Render the all lines of the delaunay triangulation, that includes the half edges and hull.
-     * It can be draw on Graphic.Path and then drawn on Canvas element or created as SVGPathData
-     * using instructions to generate the svg path data.
+     * Render the all lines of the delaunay triangulation, that includes the half edges and hull. It can be draw on
+     * Graphic.Path and then drawn on Canvas element or created as voronoi.Path using instructions to generate the
+     * svg path data.
      * @param path path object where the lines will be created
      */
     fun render(path: Any = Path()): Any {
@@ -286,12 +286,12 @@ class Delaunay(vararg var coordinates: Double) {
     }
 
     /**
-     * Render the hull lines of the delaunay triangulation. It can be draw on Graphic.Path
-     * and then drawn on Canvas element or created as SVGPathData using instructions to generate the
-     * svg path data.
+     * Render the hull lines of the delaunay triangulation. It can be draw on Graphic.Path and then drawn on Canvas
+     * element or created as voronoi.Path using instructions to generate the svg path data.
      * @param path path object where the lines will be created
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
      */
-    fun renderHull(path: Any = Path()): Any {
+    fun renderHull(path: Any = Path(), isPathClosed: Boolean = true): Any {
         var h = hull[0] * 2
 
         when (path) {
@@ -301,7 +301,10 @@ class Delaunay(vararg var coordinates: Double) {
                     h = hull[i] * 2
                     path.lineTo(coordinates[h].toFloat(), coordinates[h + 1].toFloat())
                 }
-                path.close()
+
+                if (isPathClosed) {
+                    path.close()
+                }
             }
             is Path -> {
                 path.moveTo(coordinates[h], coordinates[h + 1])
@@ -309,7 +312,10 @@ class Delaunay(vararg var coordinates: Double) {
                     h = hull[i] * 2
                     path.lineTo(coordinates[h], coordinates[h + 1])
                 }
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
             is Polygon -> {
                 path.moveTo(coordinates[h], coordinates[h + 1])
@@ -317,7 +323,10 @@ class Delaunay(vararg var coordinates: Double) {
                     h = hull[i] * 2
                     path.lineTo(coordinates[h], coordinates[h + 1])
                 }
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
         }
 
@@ -325,13 +334,12 @@ class Delaunay(vararg var coordinates: Double) {
     }
 
     /**
-     * Render the delaunay points, using the the initial coordinates. It can be draw on Graphic.Path
-     * and then drawn on Canvas element or created as SVGPathData using instructions to generate the
-     * svg path data.
+     * Render the input delaunay points, using the the initial coordinates. It can be draw on Graphic.Path and then drawn on Canvas
+     * element or created as voronoi.Path using instructions to generate the svg path data.
      * @param r radius of the circle that will be draw
      * @param path path object where the circles will be created
      */
-    fun renderPoints(r: Double = 3.0, path: Any = Path()): Any {
+    fun renderInputPoints(r: Double = 3.0, path: Any = Path()): Any {
 
         if (path is android.graphics.Path) {
             for (i in coordinates.indices step 2) {
@@ -352,12 +360,41 @@ class Delaunay(vararg var coordinates: Double) {
     }
 
     /**
+     * Render the triangle center points. It can be draw on Graphic.Path and then drawn on Canvas
+     * element or created as voronoi.Path using instructions to generate the svg path data.
+     * @param r radius of the circle that will be draw
+     * @param path path object where the circles will be created
+     */
+    fun renderCenters(r: Double = 3.0, path: Any = Path()): Any {
+
+        if (path is android.graphics.Path) {
+            for (i in 0 until triangles.size / 3) {
+                getTriangleCenter(i, tempPoint)
+                val x = tempPoint.x.toFloat()
+                val y = tempPoint.y.toFloat()
+                path.moveTo((x + r).toFloat(), y)
+                path.addCircle(x, y, r.toFloat(), android.graphics.Path.Direction.CW)
+            }
+        } else if (path is Path) {
+            for (i in 0 until triangles.size / 3) {
+                getTriangleCenter(i, tempPoint)
+                val x = tempPoint.x
+                val y = tempPoint.y
+                path.moveTo(x + r, y)
+                path.arc(x, y, r)
+            }
+        }
+        return path
+    }
+
+    /**
      * Render delaunay triangle at given index. It can be draw on Graphic.Path and then drawn on Canvas
-     * element or created as SVGPathData using instructions to generate the svg path data.
+     * element or created as voronoi.Path using instructions to generate the svg path data.
      * @param i index of the triangle
      * @param path path object where the triangle will be created
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
      */
-    fun renderTriangle(i: Int, path: Any = Path()): Any {
+    fun renderTriangle(i: Int, path: Any = Path(), isPathClosed: Boolean = true): Any {
 
         val j = i * 3
         if (j < 0 || triangles.size < j + 2) {
@@ -373,19 +410,28 @@ class Delaunay(vararg var coordinates: Double) {
                 path.moveTo(coordinates[i0].toFloat(), coordinates[i0 + 1].toFloat())
                 path.lineTo(coordinates[i1].toFloat(), coordinates[i1 + 1].toFloat())
                 path.lineTo(coordinates[i2].toFloat(), coordinates[i2 + 1].toFloat())
-                path.close()
+
+                if (isPathClosed) {
+                    path.close()
+                }
             }
             is Path -> {
                 path.moveTo(coordinates[i0], coordinates[i0 + 1])
                 path.lineTo(coordinates[i1], coordinates[i1 + 1])
                 path.lineTo(coordinates[i2], coordinates[i2 + 1])
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
             is Polygon -> {
                 path.moveTo(coordinates[i0], coordinates[i0 + 1])
                 path.lineTo(coordinates[i1], coordinates[i1 + 1])
                 path.lineTo(coordinates[i2], coordinates[i2 + 1])
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
         }
 
@@ -415,7 +461,7 @@ class Delaunay(vararg var coordinates: Double) {
      * coordinates pair: [x1,y1,x2,y2,  x3,y3,x4,y4, ...]
      * @param lineArraySize number of total amount of lines, that includes half-edge lines and the hull lines
      */
-    fun getLinesCoordinates(lineArraySize: Int): DoubleArray {
+    fun getLinesCoordinates(lineArraySize: Int = getLineArraySize()): DoubleArray {
 
         val linesPointIndices = getLinesPointIndices(lineArraySize)
 
@@ -441,7 +487,7 @@ class Delaunay(vararg var coordinates: Double) {
      * one for each point!
      * @param lineArraySize number of total amount of lines, that includes half-edge lines and the hull lines
      */
-    fun getLinesPointIndices(lineArraySize: Int): IntArray {
+    fun getLinesPointIndices(lineArraySize: Int = getLineArraySize()): IntArray {
 
         var edgeCount = 0
         val indices = IntArray(lineArraySize * 2)
@@ -522,7 +568,7 @@ class Delaunay(vararg var coordinates: Double) {
 
     /**
      * Get all center coordinates for each delaunay triangle as a double array 2 double values
-     * per center point, as each point has x and y coordinates pairs: [x1,y1,  x2,y2, ...]
+     * per center point, as each point has x and y coordinates pairs. Array is in format: [x1,y1,  x2,y2, ...]
      *
      * Each center coordinates matches the index of the triangle, for example the center point
      * coordinates x and y on index 1:
@@ -542,14 +588,10 @@ class Delaunay(vararg var coordinates: Double) {
         val newCoordinates = DoubleArray((triangles.size / 3) * 2)
         for (i in 0 until triangles.size / 3) {
 
-            // get triangle vertex indices
-            val i0 = triangles[i * 3]
-            val i1 = triangles[i * 3 + 1]
-            val i2 = triangles[i * 3 + 2]
-
             // get the middle point of the triangle
-            newCoordinates[i * 2] = (coordinates[i0 * 2] + coordinates[i1 * 2] + coordinates[i2 * 2]) / 3
-            newCoordinates[i * 2 + 1] = (coordinates[i0 * 2 + 1] + coordinates[i1 * 2 + 1] + coordinates[i2 * 2 + 1]) / 3
+            getTriangleCenter(i, tempPoint)
+            newCoordinates[i * 2] = tempPoint.x
+            newCoordinates[i * 2 + 1] = tempPoint.y
         }
         return newCoordinates
     }
@@ -557,35 +599,55 @@ class Delaunay(vararg var coordinates: Double) {
     /**
      * Get specific triangle center by given index from delaunay triangulation
      * @param i triangle index
+     * @param point existing point, that way there is no need to create new point each time
      */
-    fun triangleCenter(i: Int): Delaunator.PointD {
+    fun getTriangleCenter(i: Int, point: Delaunator.PointD = Delaunator.PointD()): Delaunator.PointD {
+
         val j = i * 3
         val i0 = triangles[j]
         val i1 = triangles[j + 1]
         val i2 = triangles[j + 2]
 
-        return Delaunator.PointD(
-            (coordinates[i0 * 2] + coordinates[i1 * 2] + coordinates[i2 * 2]) / 3,
-            (coordinates[i0 * 2 + 1] + coordinates[i1 * 2 + 1] + coordinates[i2 * 2 + 1]) / 3
-        )
+        point.x = (coordinates[i0 * 2] + coordinates[i1 * 2] + coordinates[i2 * 2]) / 3
+        point.y = (coordinates[i0 * 2 + 1] + coordinates[i1 * 2 + 1] + coordinates[i2 * 2 + 1]) / 3
+        return point
     }
 
-    fun hullPolygon(): ArrayList<Double> {
+    /**
+     * Get the coordinates of the hull for the Delaunay triangulation. Those are coordinates from
+     * all the points x,y pairs that make the hull. If pah is close coordinate of the first point
+     * are added at the end of the array list.
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
+     */
+    fun getHullCoordinates(isPathClosed: Boolean = true): ArrayList<Double> {
         val polygon = Polygon()
-        renderHull(polygon)
+        renderHull(polygon, isPathClosed)
         return polygon.coordinates
     }
 
-    fun trianglePolygons() = sequence {
+    /**
+     * Get the coordinates for triangle at given index. Those are coordinates from all three points
+     * (x,y pairs) that make the triangle. If pah is closed coordinate of the first point are added
+     * at the end of the array list.
+     * @param i index of the triangles
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
+     */
+    fun getTriangleCoordinates(i: Int, isPathClosed: Boolean = true): ArrayList<Double> {
+        val polygon = Polygon()
+        renderTriangle(i, polygon, isPathClosed)
+        return polygon.coordinates
+    }
+
+    /**
+     * Sequence function for generating all triangle coordinates as sequence, that can be converted
+     * to list. Each element of the list is ArrayList<Double> containing the coordinates for the current
+     * triangle. If pah is closed coordinate of the first point are added at the end of the array list.
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
+     */
+    fun getTrianglesCoordinatesSequence(isPathClosed: Boolean = true) = sequence {
         for (i in 0 until triangles.size / 3) {
-            yield(trianglePolygon(i))
+            yield(getTriangleCoordinates(i, isPathClosed))
         }
-    }
-
-    internal fun trianglePolygon(i: Int): ArrayList<Double> {
-        val polygon = Polygon()
-        renderTriangle(i, polygon)
-        return polygon.coordinates
     }
 
     /**
@@ -678,12 +740,23 @@ class Delaunay(vararg var coordinates: Double) {
             }
         }
 
+        /**
+         * Extension function to the array list for swapping elements at two given indices.
+         * This is generic function for all types.
+         * @param index1 first index
+         * @param index2 second index
+         */
         internal fun <T> ArrayList<T>.swap(index1: Int, index2: Int) {
             val tmp = this[index1] // 'this' corresponds to the list
             this[index1] = this[index2]
             this[index2] = tmp
         }
 
+        /**
+         * Extension function to the DoubleArray for swapping elements at two given indices.
+         * @param index1 first index
+         * @param index2 second index
+         */
         internal fun DoubleArray.swap(index1: Int, index2: Int) {
             val tmp = this[index1]
             this[index1] = this[index2]

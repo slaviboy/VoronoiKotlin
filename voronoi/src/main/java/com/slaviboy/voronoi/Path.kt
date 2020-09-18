@@ -16,13 +16,17 @@
 */
 package com.slaviboy.voronoi
 
+import android.graphics.Color
+import  com.slaviboy.voronoi.Voronoi.RectD
+import java.util.*
+
 /**
  * Class for generating svg path data string, from simple methods. Used to generate svg path data
  * from the delaunay triangulation or the voronoi diagram. To learn more about SVG paths visit:
  * https://www.w3.org/TR/SVG/paths.html
- * @param value initial path data string
+ * @param data initial path data string
  */
-data class Path(var value: String = "") {
+data class Path(var data: String = "", var bound: RectD = RectD(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY)) {
 
     companion object {
         const val epsilon = 1e-6
@@ -39,11 +43,16 @@ data class Path(var value: String = "") {
      * @param y y coordinate of the new position
      */
     fun moveTo(x: Double, y: Double) {
+
+        // add moveTo command
         x0 = x
         y0 = y
         x1 = x
         y1 = y
-        value += "M${x},${y}"
+        data += "M${x},${y}"
+
+        // update bound
+        setBound(x, y)
     }
 
     /**
@@ -52,9 +61,14 @@ data class Path(var value: String = "") {
      * @param y y coordinate of the new point
      */
     fun lineTo(x: Double, y: Double) {
+
+        // add lineTo command
         x1 = x
         y1 = y
-        value += "L${x},${y}"
+        data += "L${x},${y}"
+
+        // update bound
+        setBound(x, y)
     }
 
     /**
@@ -64,7 +78,7 @@ data class Path(var value: String = "") {
         if (x1 != null) {
             x1 = x0
             y1 = y0
-            value += "Z"
+            data += "Z"
         }
     }
 
@@ -79,9 +93,9 @@ data class Path(var value: String = "") {
         val y0 = y
 
         if (this.x1 == null) {
-            value += "M${x0},${y0}"
+            data += "M${x0},${y0}"
         } else if (Math.abs(this.x1!! - x0) > epsilon || Math.abs(this.y1!! - y0) > epsilon) {
-            value += "L${x0},${y0}"
+            data += "L${x0},${y0}"
         }
 
         if (r == 0.0) {
@@ -90,7 +104,11 @@ data class Path(var value: String = "") {
 
         this.x1 = x0
         this.y1 = y0
-        value += "A${r},${r},0,1,1,${x - r},${y}A${r},${r},0,1,1,${x0},${y0}"
+        data += "A${r},${r},0,1,1,${x - r},${y}A${r},${r},0,1,1,${x0},${y0}"
+
+        // update bound
+        setBound(x - r, y - r)
+        setBound(x + r, y + r)
     }
 
     /**
@@ -105,10 +123,47 @@ data class Path(var value: String = "") {
         x1 = x
         y0 = y
         y1 = y
-        value += "M${x},${y}h${+w}v${+h}h${-w}Z"
+        data += "M${x},${y}h${+w}v${+h}h${-w}Z"
+
+        // update bound
+        setBound(x, y)
+        setBound(x + w, y + h)
+    }
+
+    /**
+     * Generate the string for the SVG file using the available data and bound.
+     * @param strokeColor stroke color for the path
+     */
+    fun getSVG(strokeColor: Int = Color.BLACK): String {
+
+        val strokeColorHex = Integer.toHexString(strokeColor).toUpperCase(Locale.ROOT).substring(2)
+        return """ 
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${bound.right}" height="${bound.bottom}" >
+	            <path fill="none" stroke="#$strokeColorHex" d="$data" />
+            </svg>
+         """.trim()
+    }
+
+    internal fun setBound(x: Double, y: Double) {
+
+        if (x > bound.right) {
+            bound.right = x
+        }
+
+        if (x < bound.left) {
+            bound.left = x
+        }
+
+        if (y > bound.bottom) {
+            bound.bottom = y
+        }
+
+        if (y < bound.top) {
+            bound.top = y
+        }
     }
 
     override fun toString(): String {
-        return value
+        return data
     }
 }

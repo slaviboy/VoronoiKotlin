@@ -46,7 +46,7 @@ class VoronoiView : View {
     private var viewCenterY: Double                // the center of the view once it is calculated
     private var halfDiagonalWidth: Double          // half of the diagonal width
     private lateinit var delaunay: Delaunay        // delaunay object for center points
-    private lateinit var voronoi: Voronoi          // voronoi object for cells
+    lateinit var voronoi: Voronoi                  // voronoi object for cells
     private var paint: Paint                       // paint object for the drawing
     private var isInit: Boolean                    // if view size is initialized, right before drawing
     private var gradientPicker: GradientPicker     // gradient picker, that will set color for each cell
@@ -131,115 +131,91 @@ class VoronoiView : View {
     }
 
     /**
-     * Generate the polygon cells for the voronoi diagram as paths, and also generate
-     * the index for each cell as a text, that is positioned at the center of the polygon.
+     * Render all cells(polygon) for the voronoi diagram as paths, and also generate
+     * the input point and the center of each cell as a circles.
+     * @param canvas canvas where all triangles and points will be drawn
+     * @param lineColor stroke color for all lines
+     * @param centerCircleColor fill color for all circles
+     * @param circleRadius radius for all circles
      */
-    fun generateCellsWithIndex(canvas: Canvas) {
+    fun drawCellsWithPoints(
+        canvas: Canvas, lineColor: Int = Color.BLACK, inputCircleColor: Int = Color.BLUE,
+        centerCircleColor: Int = Color.GREEN, circleRadius: Double = canvas.width / 100.0
+    ) {
 
-        // render voronoi cells with its index as a text in the middle of the polygon
+        // render cells with different color depending on distance from the center
         for (i in 0 until delaunay.coordinates.size / 2) {
             path.reset()
             voronoi.renderCell(i, path)
 
-            var color = Color.WHITE
+            var cellColor = Color.WHITE
             if (useDistantColor) {
                 val cellCenterX = delaunay.coordinates[i * 2]                                   // center x of the voronoi shape
                 val cellCenterY = delaunay.coordinates[i * 2 + 1]                               // center x of the voronoi shape
                 val distance = distance(viewCenterX, viewCenterY, cellCenterX, cellCenterY)     // distance from the center screen to the cell center
                 val distanceInRange = (distance / halfDiagonalWidth).toFloat()                  // fit the distance in range between [0, 1]
-                color = gradientPicker.getColorFromGradient(distanceInRange)                    // get the color corresponding to the distance
+                cellColor = gradientPicker.getColorFromGradient(distanceInRange)                // get the color corresponding to the distance
             }
 
             // fill the cell with the corresponding color
-            paint.color = color
-            paint.style = Paint.Style.FILL
-            canvas.drawPath(path, paint)
-
-            // black stroke
-            paint.color = Color.BLACK
-            paint.style = Paint.Style.STROKE
-            canvas.drawPath(path, paint)
-
-            // add index text at the center of the polygon
-            val cell = voronoi.getCellLineCoordinates(i)
-            val center = Polygon.center(cell)
             paint.apply {
-                textAlign = Paint.Align.CENTER
+                color = cellColor
                 style = Paint.Style.FILL
             }
-            canvas.drawText("${i}", center.x.toFloat(), center.y.toFloat(), paint)
-        }
-    }
+            canvas.drawPath(path, paint)
 
-    /**
-     * Generate the polygon cells for the voronoi diagram as paths, and also generate
-     * the input point and the center of each cell as a circle.
-     */
-    fun generateCellsWithPoints(canvas: Canvas) {
-
-        // render cells with center point as a circle
-        for (i in 0 until delaunay.coordinates.size / 2) {
-            path.reset()
-            voronoi.renderCell(i, path)
-
-            var color = Color.WHITE
-            if (useDistantColor) {
-                val cellCenterX = delaunay.coordinates[i * 2]                                        // center x of the voronoi shape
-                val cellCenterY = delaunay.coordinates[i * 2 + 1]                                    // center x of the voronoi shape
-                val distance = distance(viewCenterX, viewCenterY, cellCenterX, cellCenterY)     // distance from the center screen to the cell center
-                val distanceInRange = (distance / halfDiagonalWidth).toFloat()                  // fit the distance in range between [0, 1]
-                color = gradientPicker.getColorFromGradient(distanceInRange)                    // get the color corresponding to the distance
+            // stroke the cell
+            paint.apply {
+                color = lineColor
+                style = Paint.Style.STROKE
+                strokeWidth = 2.0f
             }
-
-            // fill the cell with the corresponding color
-            paint.color = color
-            paint.style = Paint.Style.FILL
             canvas.drawPath(path, paint)
-
-            // stroke the cell with black color
-            paint.color = Color.BLACK
-            paint.style = Paint.Style.STROKE
-            canvas.drawPath(path, paint)
-
-            // original point
-            paint.color = Color.GREEN
-            paint.style = Paint.Style.FILL
-            canvas.drawCircle(delaunay.coordinates[i * 2].toFloat(), delaunay.coordinates[i * 2 + 1].toFloat(), 4.0f, paint)
-
-            // center of the polygon
-            val pointsArray = voronoi.getCellLineCoordinates(i)
-            val c = Polygon.center(pointsArray)
-            paint.color = Color.BLUE
-            canvas.drawCircle(c.x.toFloat(), c.y.toFloat(), 4.0f, paint)
         }
+
+        // draw input points
+        path.reset()
+        paint.apply {
+            color = inputCircleColor
+            style = Paint.Style.FILL
+        }
+        voronoi.renderInputPoints(circleRadius, path)
+        canvas.drawPath(path, paint)
+
+        // draw center points
+        path.reset()
+        paint.color = centerCircleColor
+        voronoi.renderCenters(circleRadius, path)
+        canvas.drawPath(path, paint)
     }
 
     fun distance(x1: Double, y1: Double, x2: Double, y2: Double): Double {
         val a = x1 - x2
         val b = y1 - y2
-        return sqrt(1.0 + a * a + b * b)
+        return sqrt(a * a + b * b)
     }
 
     /**
-     * Generate voronoi diagram as a path.
+     * Render all voronoi lines for the voronoi diagram.
+     * @param canvas canvas where all lines will be drawn
+     * @param lineColor stroke color for all lines
      */
-    fun generateVoronoi(canvas: Canvas) {
-        path.reset()
-        voronoi.render(path)
-        paint.color = Color.BLACK
-        paint.style = Paint.Style.STROKE
-        canvas.drawPath(path, paint)
+    fun drawLines(canvas: Canvas, lineColor: Int = Color.BLACK) {
 
-        /*val centers = voronoi.getCellsCenterCoordinates()
-        for( i in 0 until centers.size/2){
-            canvas.drawCircle(centers[i*2].toFloat(), centers[i*2 +1].toFloat(), 2f, paint )
-        }*/
+        // draw voronoi lines
+        path.reset()
+        paint.apply {
+            color = lineColor
+            style = Paint.Style.STROKE
+            strokeWidth = 2.0f
+        }
+        voronoi.render(path)
+        canvas.drawPath(path, paint)
     }
 
     override fun onDraw(canvas: Canvas) {
 
-        //generateCellsWithIndex(canvas)
-        //generateCellsWithPoints(canvas)
-        generateVoronoi(canvas)
+        drawLines(canvas)
+        //drawCellsWithPoints(canvas)
     }
 }

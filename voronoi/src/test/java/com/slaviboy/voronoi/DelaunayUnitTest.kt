@@ -60,30 +60,36 @@ class DelaunayUnitTest {
         // test render methods
         delaunay = Delaunay(345.2, 53.3, 526.21, 53.11, 72.3, 213.54, 54.3, 93.4)
         var path: Path = delaunay.renderTriangle(1) as Path
-        assertThat(path.value).isEqualTo("M345.2,53.3L54.3,93.4L72.3,213.54Z")
+        assertThat(path.data).isEqualTo("M345.2,53.3L54.3,93.4L72.3,213.54Z")
 
         path = delaunay.renderTriangle(0) as Path
-        assertThat(path.value).isEqualTo("M345.2,53.3L72.3,213.54L526.21,53.11Z")
+        assertThat(path.data).isEqualTo("M345.2,53.3L72.3,213.54L526.21,53.11Z")
 
         path = delaunay.renderHull() as Path
-        assertThat(path.value).isEqualTo("M345.2,53.3L54.3,93.4L72.3,213.54L526.21,53.11Z")
+        assertThat(path.data).isEqualTo("M345.2,53.3L54.3,93.4L72.3,213.54L526.21,53.11Z")
 
-        path = delaunay.renderPoints() as Path
-        assertThat(path.value).isEqualTo("M348.2,53.3A3.0,3.0,0,1,1,342.2,53.3A3.0,3.0,0,1,1,348.2,53.3M529.21,53.11A3.0,3.0,0,1,1,523.21,53.11A3.0,3.0,0,1,1,529.21,53.11M75.3,213.54A3.0,3.0,0,1,1,69.3,213.54A3.0,3.0,0,1,1,75.3,213.54M57.3,93.4A3.0,3.0,0,1,1,51.3,93.4A3.0,3.0,0,1,1,57.3,93.4")
+        path = delaunay.renderInputPoints() as Path
+        assertThat(path.data).isEqualTo("M348.2,53.3A3.0,3.0,0,1,1,342.2,53.3A3.0,3.0,0,1,1,348.2,53.3M529.21,53.11A3.0,3.0,0,1,1,523.21,53.11A3.0,3.0,0,1,1,529.21,53.11M75.3,213.54A3.0,3.0,0,1,1,69.3,213.54A3.0,3.0,0,1,1,75.3,213.54M57.3,93.4A3.0,3.0,0,1,1,51.3,93.4A3.0,3.0,0,1,1,57.3,93.4")
 
         path = delaunay.render() as Path
-        assertThat(path.value).isEqualTo("M345.2,53.3L72.3,213.54M345.2,53.3L54.3,93.4L72.3,213.54L526.21,53.11Z")
+        assertThat(path.data).isEqualTo("M345.2,53.3L72.3,213.54M345.2,53.3L54.3,93.4L72.3,213.54L526.21,53.11Z")
 
         path = delaunay.renderHalfEdges() as Path
-        assertThat(path.value).isEqualTo("M345.2,53.3L72.3,213.54")
+        assertThat(path.data).isEqualTo("M345.2,53.3L72.3,213.54")
 
         val lineArraySize = delaunay.getLineArraySize()
         assertThat(lineArraySize).isEqualTo(5)
 
-        val lineCoordinates = delaunay.getLinesCoordinates(lineArraySize)
+        var lineCoordinates = delaunay.getLinesCoordinates(lineArraySize)
         assertThat(lineCoordinates).isEqualTo(doubleArrayOf(345.2, 53.3, 72.3, 213.54, 345.2, 53.3, 54.3, 93.4, 54.3, 93.4, 72.3, 213.54, 72.3, 213.54, 526.21, 53.11, 345.2, 53.3, 526.21, 53.11))
 
-        val linePointIndices = delaunay.getLinesPointIndices(lineArraySize)
+        lineCoordinates = delaunay.getLinesCoordinates() // with auto generating line array size
+        assertThat(lineCoordinates).isEqualTo(doubleArrayOf(345.2, 53.3, 72.3, 213.54, 345.2, 53.3, 54.3, 93.4, 54.3, 93.4, 72.3, 213.54, 72.3, 213.54, 526.21, 53.11, 345.2, 53.3, 526.21, 53.11))
+
+        var linePointIndices = delaunay.getLinesPointIndices(lineArraySize)
+        assertThat(linePointIndices).isEqualTo(intArrayOf(0, 2, 0, 3, 3, 2, 2, 1, 0, 1))
+
+        linePointIndices = delaunay.getLinesPointIndices() // with auto generating line array size
         assertThat(linePointIndices).isEqualTo(intArrayOf(0, 2, 0, 3, 3, 2, 2, 1, 0, 1))
 
         val trianglesCoordinates = delaunay.getTrianglesCoordinates()
@@ -94,6 +100,22 @@ class DelaunayUnitTest {
 
         val trianglesCenterCoordinates = delaunay.getTriangleCenterCoordinates()
         assertThat(trianglesCenterCoordinates).isEqualTo(doubleArrayOf(314.57, 106.64999999999999, 157.26666666666668, 120.08))
+
+        // get center at positions
+        assertThat(delaunay.getTriangleCenter(0)).isEqualTo(PointD(314.57, 106.64999999999999))
+        assertThat(delaunay.getTriangleCenter(1)).isEqualTo(PointD(157.26666666666668, 120.08))
+
+        // set triangle coordinates including close path, that means first point coordinates are added at the end
+        val trianglesCoordinatesSequence = delaunay.getTrianglesCoordinatesSequence()
+        assertThat(trianglesCoordinatesSequence.toList()).isEqualTo(
+            listOf(
+                arrayListOf(345.2, 53.3, 72.3, 213.54, 526.21, 53.11, 345.2, 53.3),
+                arrayListOf(345.2, 53.3, 54.3, 93.4, 72.3, 213.54, 345.2, 53.3)
+            )
+        )
+
+        val hullCoordinates = delaunay.getHullCoordinates()
+        assertThat(hullCoordinates).isEqualTo(arrayListOf(345.2, 53.3, 54.3, 93.4, 72.3, 213.54, 526.21, 53.11, 345.2, 53.3))
 
         // test static methods
         // sort by y

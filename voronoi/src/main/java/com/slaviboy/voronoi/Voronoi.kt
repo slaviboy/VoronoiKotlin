@@ -30,7 +30,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     lateinit var vectors: DoubleArray
     lateinit var circumcenters: DoubleArray              // array with the circumcenters of the circle around the delaunay triangle
-    internal lateinit var centroid: Delaunator.PointD    // temp point object that is reused and holds the centroid of each polygon(cell)
+    internal lateinit var tempPoint: Delaunator.PointD    // temp point object that is reused and holds the centroid of each polygon(cell)
 
     init {
         if (bound.right.isNaN() || bound.bottom.isNaN() || bound.right < bound.left || bound.bottom < bound.top) {
@@ -41,7 +41,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     internal fun init() {
 
-        centroid = Delaunator.PointD()
+        tempPoint = Delaunator.PointD()
 
         val coordinates = delaunay.coordinates
         val hull = delaunay.hull
@@ -130,8 +130,8 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
     }
 
     /**
-     * Render the whole voronoi diagram (all voronoi polygon(cell)) on a given path. It can be draw on Graphic.Path
-     * and then drawn on Canvas element or created as SVGPathData using instructions to generate the svg path data.
+     * Render the whole voronoi diagram that includes all lines on a given path. It can be draw on Graphic.Path
+     * and then drawn on Canvas element or created as voronoi.Path using instructions to generate the svg path data.
      * @param path path object where the triangle will be created
      */
     fun render(path: Any = Path()): Any {
@@ -177,7 +177,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     /**
      * Render the boundary box as rectangle, for the voronoi diagram. It can be draw on Graphic.Path and then drawn
-     * on Canvas element or created as SVGPathData using instructions to generate the svg path data.
+     * on Canvas element or created as voronoi.Path using instructions to generate the svg path data.
      * @param path path object where the triangle will be created
      */
     fun renderBounds(path: Any = Path()): Any {
@@ -190,11 +190,13 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
     }
 
     /**
-     * Render particular polygon(cell) from the voronoi diagram given by index
+     * Render particular polygon(cell) from the voronoi diagram given by index. It can be draw on Graphic.Path and then drawn
+     * on Canvas element or created as voronoi.Path using instructions to generate the svg path data.
      * @param i index of the cell from the voronoi diagram
      * @param path path object where the triangle will be created
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
      */
-    fun renderCell(i: Int, path: Any = Path()): Any {
+    fun renderCell(i: Int, path: Any = Path(), isPathClosed: Boolean = true): Any {
         val points = clip(i)
 
         if (points == null || points.size == 0) {
@@ -215,9 +217,13 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                     }
                     i += 2
                 }
-                path.close()
+
+                if (isPathClosed) {
+                    path.close()
+                }
             }
             is Path -> {
+                path.bound = RectD(bound)
                 path.moveTo(points[0], points[1])
                 var n = points.size
                 while (points[0] == points[n - 2] && points[1] == points[n - 1] && n > 1) {
@@ -230,7 +236,10 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                     }
                     i += 2
                 }
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
             is Polygon -> {
                 path.moveTo(points[0], points[1])
@@ -245,7 +254,10 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                     }
                     i += 2
                 }
-                path.closePath()
+
+                if (isPathClosed) {
+                    path.closePath()
+                }
             }
         }
 
@@ -253,48 +265,117 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
     }
 
     /**
-     * Get coordinates for the polygon(cell) by given index, it is also clipping the cell
-     * to its surrounding edges of the bound.
-     * @param i index for the cell
+     * Render the input delaunay points, using the the initial coordinates. It can be draw on Graphic.Path and then drawn on Canvas
+     * element or created as voronoi.Path using instructions to generate the svg path data.
+     * @param r radius of the circle that will be draw
+     * @param path path object where the circles will be created
      */
-    fun getCellLineCoordinates(i: Int): ArrayList<Double> {
-        return clip(i) ?: ArrayList()
+    fun renderInputPoints(r: Double = 3.0, path: Any = Path()): Any {
+        return delaunay.renderInputPoints(r, path)
     }
 
     /**
-     * Get the center point as (x,y coordinates pairs) for each polygon(cell) as
-     * array list.
+     * Render the polygons(cells) center points. It can be draw on Graphic.Path and then drawn on Canvas
+     * element or created as voronoi.Path using instructions to generate the svg path data.
+     * @param r radius of the circle that will be draw
+     * @param path path object where the circles will be created
+     */
+    fun renderCenters(r: Double = 3.0, path: Any = Path()): Any {
+
+        val centers = getCellsCenterCoordinates()
+        if (path is android.graphics.Path) {
+            for (i in 0 until centers.size / 2) {
+                val x = centers[i * 2].toFloat()
+                val y = centers[i * 2 + 1].toFloat()
+                path.moveTo((x + r).toFloat(), y)
+                path.addCircle(x, y, r.toFloat(), android.graphics.Path.Direction.CW)
+            }
+        } else if (path is Path) {
+            for (i in 0 until centers.size / 2) {
+                val x = centers[i * 2]
+                val y = centers[i * 2 + 1]
+                path.moveTo(x + r, y)
+                path.arc(x, y, r)
+            }
+        }
+        return path
+    }
+
+    /**
+     * Get the center point as (x,y coordinates pairs) for each polygon(cell) as array list, two double values
+     * per center point, as each point has x and y coordinates pairs. Array is in format: [x1,y1,  x2,y2, ...]
      */
     fun getCellsCenterCoordinates(): ArrayList<Double> {
-        val coordinates = getCellsCoordinates()
+        val coordinates = getCellsCoordinates(false)
         val centers = ArrayList<Double>()
         for (i in coordinates.indices) {
-            center(coordinates[i], centroid)
-            centers.add(centroid.x)
-            centers.add(centroid.y)
+            center(coordinates[i], tempPoint)
+            centers.add(tempPoint.x)
+            centers.add(tempPoint.y)
         }
         return centers
     }
 
     /**
-     * Get the cells coordinates as (x,y coordinates pairs) for each polygon(cell) as
-     * array list.
+     * Get all coordinates for each polygon(cell) as array list. Each point of the polygon has 2 coordinates
+     * x and y that means array list is in format: [ [x1,y1,  x2,y2, ...], [x1,y1,  x2,y2, ...], ... ].
+     * If path is closed that means the coordinates from the first point are added to the end of the array list.
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
      */
-    fun getCellsCoordinates(): ArrayList<ArrayList<Double>> {
+    fun getCellsCoordinates(isPathClosed: Boolean = true): ArrayList<ArrayList<Double>> {
 
         val coordinatesList = ArrayList<ArrayList<Double>>()
         for (i in 0 until delaunay.coordinates.size / 2) {
-            coordinatesList.add(clip(i) ?: ArrayList())
+            val coordinate = clip(i) ?: ArrayList()
+            coordinatesList.add(coordinate)
+        }
+
+        // if path is closed att the first coordinates of each polygon to the end of there corresponding array list
+        if (isPathClosed) {
+            for (i in 0 until delaunay.coordinates.size / 2) {
+                coordinatesList[i].add(coordinatesList[i][0])
+                coordinatesList[i].add(coordinatesList[i][1])
+            }
         }
         return coordinatesList
     }
 
     /**
-     * Get the lines (x,y coordinates pairs) for each polygon(cell) as a single
-     * array list.
+     * Get the lines (x,y coordinates pairs) for each polygon(cell) as a single array list. Each line
+     * is made out of two points and each point has x,y coordinates pair. That give total of four
+     * coordinates per line, the array list is in format [x1,y1,x2,y2,  x3,y3,x4,y4, ...]
      */
     fun getLinesCoordinates(): ArrayList<Double> {
         return (render(Polygon()) as Polygon).coordinates
+    }
+
+    /**
+     * Sequence function for generating all cell coordinates as sequence, that can be converted
+     * to list. Each element list is ArrayList<Double> containing the coordinates for the current
+     * polygon(cell) at that particular index.
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
+     */
+    fun getCellsCoordinatesSequence(isPathClosed: Boolean = true) = sequence {
+        for (i in 0 until delaunay.coordinates.size / 2) {
+            val cell = getCellCoordinates(i, isPathClosed)
+            if (cell.coordinates.size > 0) {
+                cell.index = i
+                yield(cell)
+            }
+        }
+    }
+
+    /**
+     * Get coordinates for polygon(cell) at given index. If path is closed that means the coordinates
+     * from the first point are added to the end of the array list. And then return object that has the
+     * coordinates and also holds the index of the polygon.
+     * @param i index of the polygon(cell)
+     * @param isPathClosed whether the path should be closed and the first point coordinates should be added at the end of the array list
+     */
+    fun getCellCoordinates(i: Int, isPathClosed: Boolean = true): CellValues {
+        val polygon = Polygon()
+        renderCell(i, polygon, isPathClosed)
+        return CellValues(polygon.coordinates)
     }
 
     /**
@@ -311,10 +392,10 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
             // update coordinates and apply update after each iterations
             for (i in 0 until delaunay.coordinates.size / 2) {
 
-                val pointsArray = getCellLineCoordinates(i)
-                center(pointsArray, centroid)
-                delaunay.coordinates[i * 2] = centroid.x
-                delaunay.coordinates[i * 2 + 1] = centroid.y
+                val coordinate = clip(i) ?: ArrayList()
+                center(coordinate, tempPoint)
+                delaunay.coordinates[i * 2] = tempPoint.x
+                delaunay.coordinates[i * 2 + 1] = tempPoint.y
                 update()
             }
         }
@@ -336,6 +417,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                 }
             }
         } else if (path is Path) {
+            path.bound = RectD(bound)
             if (c0 == 0 && c1 == 0) {
                 path.moveTo(x0, y0)
                 path.lineTo(x1, y1)
@@ -358,22 +440,6 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                 }
             }
         }
-    }
-
-    fun cellPolygons() = sequence {
-        for (i in 0 until delaunay.coordinates.size / 2) {
-            val cell = cellPolygon(i)
-            if (cell.coordinates.size > 0) {
-                cell.index = i
-                yield(cell)
-            }
-        }
-    }
-
-    fun cellPolygon(i: Int): PolygonValue {
-        val polygon = Polygon()
-        renderCell(i, polygon)
-        return PolygonValue(polygon.coordinates)
     }
 
     fun neighbors(i: Int) = sequence {
@@ -801,6 +867,8 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
      */
     data class RectD(var left: Double = 0.0, var top: Double = 0.0, var right: Double = 100.0, var bottom: Double = 50.0) {
 
+        constructor(bound: RectD) : this(bound.left, bound.top, bound.right, bound.bottom)
+
         /**
          * Get the width of the bound
          */
@@ -821,9 +889,9 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
     }
 
     /**
-     * Holding the polygon points values and the index
+     * Holding the polygon(cell) coordinate for each points x,y pair and the index
      * @param coordinates array list with all the points coordinates from the polygon
      * @param index index of the polygon
      */
-    data class PolygonValue(var coordinates: ArrayList<Double>, var index: Int = -1)
+    data class CellValues(var coordinates: ArrayList<Double>, var index: Int = -1)
 }

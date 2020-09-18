@@ -68,13 +68,13 @@ class VoronoiUnitTest {
         voronoi = Voronoi(delaunay)
 
         var path: Path = voronoi.render() as Path
-        assertThat(path.value).isEqualTo(voronoiValues.method_render)
+        assertThat(path.data).isEqualTo(voronoiValues.method_render)
 
         path = voronoi.renderBounds() as Path
-        assertThat(path.value).isEqualTo(voronoiValues.method_renderBound)
+        assertThat(path.data).isEqualTo(voronoiValues.method_renderBound)
 
         path = voronoi.renderCell(2) as Path
-        assertThat(path.value).isEqualTo(voronoiValues.method_renderCell)
+        assertThat(path.data).isEqualTo(voronoiValues.method_renderCell)
 
         // center values of the polygons(cells)
         val centers = voronoi.getCellsCenterCoordinates()
@@ -116,14 +116,14 @@ class VoronoiUnitTest {
             -140.0, 500.0,
             -500.0, 500.0
         )
-        var p = voronoi.update().cellPolygon(1) // correct after voronoi.update
+        var p = voronoi.update().getCellCoordinates(1) // correct after voronoi.update
         assertThat(p.coordinates).isEqualTo(expectedP)
 
         // voronoi.update() updates a degenerate voronoi
         var pts = doubleArrayOf(10.0, 10.0, -290.0, 10.0, 10.0, -290.0, -290.0, -290.0, -90.0, -90.0)
         delaunay = Delaunay(*DoubleArray(pts.size))
         voronoi = delaunay.voronoi(-500.0, -500.0, 500.0, 500.0)
-        assertThat(voronoi.cellPolygon(0).coordinates).isEqualTo(
+        assertThat(voronoi.getCellCoordinates(0).coordinates).isEqualTo(
             arrayListOf(
                 500.0, -500.0,
                 500.0, 500.0,
@@ -132,19 +132,19 @@ class VoronoiUnitTest {
                 500.0, -500.0
             )
         )
-        assertThat(voronoi.cellPolygon(1).coordinates).isEmpty()
+        assertThat(voronoi.getCellCoordinates(1).coordinates).isEmpty()
 
         for (i in delaunay.coordinates.indices) {
             delaunay.coordinates[i] = pts[i]
         }
-        p = voronoi.update().cellPolygon(1)
+        p = voronoi.update().getCellCoordinates(1)
         assertThat(p.coordinates).isEqualTo(expectedP)
 
         // zero-length edges are removed
         val voronoi1 = Delaunay(50.0, 10.0, 10.0, 50.0, 10.0, 10.0, 200.0, 100.0).voronoi(40.0, 40.0, 440.0, 180.0)
-        assertThat(voronoi1.cellPolygon(0).coordinates.size).isEqualTo(4 * 2)
+        assertThat(voronoi1.getCellCoordinates(0).coordinates.size).isEqualTo(4 * 2)
         val voronoi2 = Delaunay(10.0, 10.0, 20.0, 10.0).voronoi(0.0, 0.0, 30.0, 20.0)
-        assertThat(voronoi2.cellPolygon(0).coordinates).isEqualTo(
+        assertThat(voronoi2.getCellCoordinates(0).coordinates).isEqualTo(
             arrayListOf(
                 15.0, 20.0,
                 0.0, 20.0,
@@ -176,7 +176,7 @@ class VoronoiUnitTest {
         )
         for (i in 0 until points.size) {
             val voronoi = Delaunay.from(points[i]).voronoi(0.0, 0.0, 290.0, 190.0)
-            assertThat(voronoi.cellPolygons().toList().map {
+            assertThat(voronoi.getCellsCoordinatesSequence().toList().map {
                 it.coordinates.size / 2
             }).isEqualTo(lengths[i])
         }
@@ -189,15 +189,15 @@ class VoronoiUnitTest {
             PointD(522.3235931288071, 296.17640687119285), PointD(504.75, 253.75), PointD(564.75, 193.75)
         )
         voronoi = Delaunay.from(pts2).voronoi(10.0, 10.0, 960.0, 500.0)
-        assertThat(voronoi.cellPolygon(0).coordinates.toList().size).isEqualTo(4 * 2)
+        assertThat(voronoi.getCellCoordinates(0).coordinates.toList().size).isEqualTo(4 * 2)
 
         // cellPolygons filter out empty cells and have the cell index as a property
         pts = doubleArrayOf(0.0, 0.0, 3.0, 3.0, 1.0, 1.0, -3.0, -2.0)
         voronoi = Delaunay(*pts).voronoi(0.0, 0.0, 2.0, 2.0)
-        assertThat(voronoi.cellPolygons().toList()).isEqualTo(
+        assertThat(voronoi.getCellsCoordinatesSequence().toList()).isEqualTo(
             listOf(
-                Voronoi.PolygonValue(arrayListOf(0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0), 0),
-                Voronoi.PolygonValue(arrayListOf(0.0, 1.0, 1.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 1.0), 2)
+                Voronoi.CellValues(arrayListOf(0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0), 0),
+                Voronoi.CellValues(arrayListOf(0.0, 1.0, 1.0, 0.0, 2.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 1.0), 2)
             )
         )
     }

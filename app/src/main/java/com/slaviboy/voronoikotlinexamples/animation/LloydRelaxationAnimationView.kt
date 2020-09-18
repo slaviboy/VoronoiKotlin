@@ -149,7 +149,7 @@ class LloydRelaxationAnimationView : SurfaceView, AnimationThread.OnThreadCallLi
         // clear canvas
         canvas.drawColor(Color.GREEN)
 
-        val cells = voronoi.cellPolygons().toList()
+        val cells = voronoi.getCellsCoordinatesSequence().toList()
 
         // draw each cell and set its color depending on the area of the polygon, bigger area darker polygon
         paint.style = Paint.Style.FILL
