@@ -6,7 +6,7 @@ Simple library for generate [Voronoi diagram](https://en.wikipedia.org/wiki/Voro
 </p>
  
 ## About
-VoronoiKotlin is an incredibly fast Kotlin library for generating Voronoi diagram of 2D points. The Voronoi diagram is constructed by connecting the circumcenters of adjacent triangles in the Delaunay triangulation and by using the library  [DelaunatorKotlin](https://github.com/slaviboy/DelaunatorKotlin). If you want to learn more about how to use the VoronoiKotlin library you can check the [WIKI]() page.
+VoronoiKotlin is an incredibly fast Kotlin library for generating Voronoi diagram of 2D points. The Voronoi diagram is constructed by connecting the circumcenters of adjacent triangles in the Delaunay triangulation and by using the library  [DelaunatorKotlin](https://github.com/slaviboy/DelaunatorKotlin). If you want to learn more about how to use the VoronoiKotlin library you can check the [Wiki](https://github.com/slaviboy/VoronoiKotlin/wiki) page.
 
 [![Platform](https://img.shields.io/badge/platform-android-green.svg)](http://developer.android.com/index.html)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
