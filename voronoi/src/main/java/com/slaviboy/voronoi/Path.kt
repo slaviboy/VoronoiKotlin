@@ -75,7 +75,7 @@ data class Path(var data: String = "", var bound: RectD = RectD(Double.POSITIVE_
      * Add instruction for closing the path, to the svg path data string
      */
     fun closePath() {
-        if (x1 != null) {
+        if (x1 != null && y1 != null) {
             x1 = x0
             y1 = y0
             data += "Z"
@@ -87,14 +87,15 @@ data class Path(var data: String = "", var bound: RectD = RectD(Double.POSITIVE_
      * @param x center x coordinate of the arc
      * @param y center y coordinate of the arc
      * @param r radius of the arc
+     * @param isLineToCalled if before drawing the arc, lineTo() or moveTo() command is applied
      */
-    fun arc(x: Double, y: Double, r: Double) {
+    fun arc(x: Double, y: Double, r: Double, isLineToCalled: Boolean = false) {
         val x0 = x + r
         val y0 = y
 
-        if (this.x1 == null) {
+        if (!isLineToCalled || (x1 == null && y1 == null)) {
             data += "M${x0},${y0}"
-        } else if (Math.abs(this.x1!! - x0) > epsilon || Math.abs(this.y1!! - y0) > epsilon) {
+        } else if (x1 != null && y1 != null && Math.abs(x1!! - x0) > epsilon || Math.abs(y1!! - y0) > epsilon) {
             data += "L${x0},${y0}"
         }
 
@@ -102,8 +103,8 @@ data class Path(var data: String = "", var bound: RectD = RectD(Double.POSITIVE_
             return
         }
 
-        this.x1 = x0
-        this.y1 = y0
+        x1 = x0
+        y1 = y0
         data += "A${r},${r},0,1,1,${x - r},${y}A${r},${r},0,1,1,${x0},${y0}"
 
         // update bound
