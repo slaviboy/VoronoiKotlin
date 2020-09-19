@@ -134,15 +134,43 @@ data class Path(var data: String = "", var bound: RectD = RectD(Double.POSITIVE_
     /**
      * Generate the string for the SVG file using the available data and bound.
      * @param strokeColor stroke color for the path
+     * @param strokeWidth stroke width for the path
+     * @param fillColor fill color for the path
      */
-    fun getSVG(strokeColor: Int = Color.BLACK): String {
+    fun getSVG(
+        strokeColor: Int = Color.BLACK, strokeWidth: Double = 1.0,
+        fillColor: Int = Color.TRANSPARENT
+    ): String {
 
-        val strokeColorHex = Integer.toHexString(strokeColor).toUpperCase(Locale.ROOT).substring(2)
+        val strokeColorHex = getColorString(strokeColor)
+        val fillColorHex = getColorString(fillColor)
         return """ 
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${bound.right}" height="${bound.bottom}" >
-	            <path fill="none" stroke="#$strokeColorHex" d="$data" />
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${bound.right + strokeWidth}" height="${bound.bottom + strokeWidth}" >
+	            <path fill="$fillColorHex" stroke="$strokeColorHex" stroke-width="$strokeWidth" d="$data" />
             </svg>
          """.trim()
+    }
+
+    /**
+     * Get color as integer to color represented as hexadecimal string. If the alpha channel for
+     * the color is 0, set the string to none.
+     * @param color integer representation of the color
+     * @param includeAlpha whether to include the alpha channel to the hexadecimal representation
+     */
+    fun getColorString(color: Int = Color.TRANSPARENT, includeAlpha: Boolean = true): String {
+        val a = Color.alpha(color)
+        return if (color == Color.TRANSPARENT || a == 0) {
+            "none"
+        } else {
+            val r = Color.red(color)
+            val g = Color.green(color)
+            val b = Color.blue(color)
+            if (includeAlpha) {
+                "#" + String.format("%02x%02x%02x%02x", r, g, b, a).toUpperCase(Locale.ROOT)
+            } else {
+                "#" + String.format("%02x%02x%02x", r, g, b).toUpperCase(Locale.ROOT)
+            }
+        }
     }
 
     internal fun setBound(x: Double, y: Double) {
