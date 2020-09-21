@@ -21,6 +21,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewTreeObserver
+import com.slaviboy.graphics.RectD
 import com.slaviboy.voronoi.Delaunay
 import com.slaviboy.voronoi.Polygon
 import com.slaviboy.voronoi.Voronoi
@@ -122,7 +123,7 @@ class VoronoiView : View {
         }
         // generate delaunay and voronoi objects
         delaunay = Delaunay(*points)
-        voronoi = Voronoi(delaunay, Voronoi.RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
+        voronoi = Voronoi(delaunay, RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
 
         // apply relaxation to the points
         voronoi.relax(relaxationLoops)

@@ -17,7 +17,7 @@
 package com.slaviboy.voronoi
 
 import android.graphics.Color
-import  com.slaviboy.voronoi.Voronoi.RectD
+import com.slaviboy.graphics.RectD
 import java.util.*
 
 /**

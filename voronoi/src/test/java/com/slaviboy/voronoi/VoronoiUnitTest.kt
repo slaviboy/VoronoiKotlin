@@ -1,11 +1,12 @@
 package com.slaviboy.voronoi
 
-import android.content.Context
-import com.slaviboy.delaunator.Delaunator.PointD
+import android.content.Context 
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -47,7 +48,7 @@ class VoronoiUnitTest {
         var voronoi = Voronoi(delaunay)
 
         // check voronoi expected values
-        assertThat(voronoi.bound).isEqualTo(Voronoi.RectD(0.0, 0.0, 960.0, 500.0))
+        assertThat(voronoi.bound).isEqualTo(RectD(0.0, 0.0, 960.0, 500.0))
         assertThat(voronoi.circumcenters).isEqualTo(voronoiValues.circumcenters)
         assertThat(voronoi.vectors).isEqualTo(voronoiValues.vectors)
 

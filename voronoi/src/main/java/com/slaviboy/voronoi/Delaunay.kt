@@ -18,6 +18,8 @@ package com.slaviboy.voronoi
 
 import com.slaviboy.delaunator.Delaunator
 import com.slaviboy.delaunator.Delaunator.Companion.toDoubleArray
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import kotlin.collections.ArrayList
 
 /**
@@ -32,7 +34,7 @@ class Delaunay(vararg var coordinates: Double) {
 
     internal var delaunator = Delaunator(*coordinates)
     internal var hullIndexTemp = IntArray(coordinates.size / 2)
-    internal var tempPoint: Delaunator.PointD = Delaunator.PointD()
+    internal var tempPoint: PointD = PointD()
 
     lateinit var collinear: ArrayList<Int>
     lateinit var halfEdges: IntArray
@@ -120,7 +122,7 @@ class Delaunay(vararg var coordinates: Double) {
      * RectD object.
      * @param bound bound for the voronoi
      */
-    fun voronoi(bound: Voronoi.RectD? = null): Voronoi {
+    fun voronoi(bound: RectD? = null): Voronoi {
         return if (bound != null) {
             Voronoi(this, bound)
         } else {
@@ -137,7 +139,7 @@ class Delaunay(vararg var coordinates: Double) {
      * @param bottom bottom of the bound
      */
     fun voronoi(left: Double = 0.0, top: Double = 0.0, right: Double = 100.0, bottom: Double = 50.0): Voronoi {
-        return voronoi(Voronoi.RectD(left, top, right, bottom))
+        return voronoi(RectD(left, top, right, bottom))
     }
 
     fun neighbors(i: Int) = sequence {
@@ -601,7 +603,7 @@ class Delaunay(vararg var coordinates: Double) {
      * @param i triangle index
      * @param point existing point, that way there is no need to create new point each time
      */
-    fun getTriangleCenter(i: Int, point: Delaunator.PointD = Delaunator.PointD()): Delaunator.PointD {
+    fun getTriangleCenter(i: Int, point: PointD = PointD()): PointD {
 
         val j = i * 3
         val i0 = triangles[j]
@@ -671,7 +673,7 @@ class Delaunay(vararg var coordinates: Double) {
          * x and y coordinates
          * @param points array list with the points for the delaunay
          */
-        fun from(points: ArrayList<Delaunator.PointD>): Delaunay {
+        fun from(points: ArrayList<PointD>): Delaunay {
             val coordinates = DoubleArray(points.size * 2)
             for (i in points.indices) {
                 coordinates[i * 2] = points[i].x
@@ -685,7 +687,7 @@ class Delaunay(vararg var coordinates: Double) {
          * x and y coordinates
          * @param points array with the points for the delaunay
          */
-        fun from(vararg points: Delaunator.PointD): Delaunay {
+        fun from(vararg points: PointD): Delaunay {
             val coordinates = DoubleArray(points.size * 2)
             for (i in points.indices) {
                 coordinates[i * 2] = points[i].x
@@ -714,7 +716,7 @@ class Delaunay(vararg var coordinates: Double) {
             return true
         }
 
-        internal fun jitter(x: Double, y: Double, r: Double, p: Delaunator.PointD) {
+        internal fun jitter(x: Double, y: Double, r: Double, p: PointD) {
             p.x = x + Math.sin(x + y) * r
             p.y = y + Math.cos(x - y) * r
         }

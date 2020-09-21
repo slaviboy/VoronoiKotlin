@@ -21,6 +21,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 import com.slaviboy.delaunator.Delaunator
+import com.slaviboy.graphics.PointD
 import com.slaviboy.voronoi.Delaunay
 import com.slaviboy.voronoikotlinexamples.drawing.VoronoiView.Companion.afterMeasured
 
@@ -41,7 +42,7 @@ class DelaunayView : View {
     )
 
     private var numberOfRandomPoints: Int               // number of points that will be generated
-    private lateinit var viewCenter: Delaunator.PointD  // the center of the view once it is calculated
+    private lateinit var viewCenter: PointD             // the center of the view once it is calculated
     private var halfDiagonalWidth: Double               // half of the diagonal width
     lateinit var delaunay: Delaunay                     // delaunay object for center points
     private var paint: Paint                            // paint object for the drawing
@@ -75,13 +76,13 @@ class DelaunayView : View {
         // called on a final measure, when view size is available
         this.afterMeasured {
             isInit = true
-            viewCenter = Delaunator.PointD(width / 2.0, height / 2.0)
+            viewCenter = PointD(width / 2.0, height / 2.0)
             halfDiagonalWidth = Math.sqrt((width * width + height * height) / 4.0)
             initVoronoi()
         }
     }
 
-    fun distance(p1: Delaunator.PointD, p2: Delaunator.PointD): Double {
+    fun distance(p1: PointD, p2: PointD): Double {
         val a = p1.x - p2.x
         val b = p1.y - p2.y
         return Math.sqrt(1.0 + a * a + b * b)

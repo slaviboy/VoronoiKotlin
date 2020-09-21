@@ -35,5 +35,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation project(":voronoi")
-    implementation 'com.github.slaviboy:DelaunatorKotlin:v.0.1.1'
+    implementation 'com.github.slaviboy:DelaunatorKotlin:0.2.0'
+    implementation 'com.github.slaviboy:GraphicsKotlin:0.1.0'
 }

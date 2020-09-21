@@ -17,6 +17,8 @@
 package com.slaviboy.voronoi
 
 import com.slaviboy.delaunator.Delaunator
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import com.slaviboy.voronoi.Polygon.Companion.center
 
 /**
@@ -30,7 +32,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     lateinit var vectors: DoubleArray
     lateinit var circumcenters: DoubleArray              // array with the circumcenters of the circle around the delaunay triangle
-    internal lateinit var tempPoint: Delaunator.PointD    // temp point object that is reused and holds the centroid of each polygon(cell)
+    internal lateinit var tempPoint: PointD    // temp point object that is reused and holds the centroid of each polygon(cell)
 
     init {
         if (bound.right.isNaN() || bound.bottom.isNaN() || bound.right < bound.left || bound.bottom < bound.top) {
@@ -41,7 +43,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     internal fun init() {
 
-        tempPoint = Delaunator.PointD()
+        tempPoint = PointD()
 
         val coordinates = delaunay.coordinates
         val hull = delaunay.hull
@@ -512,7 +514,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
 
     internal fun clipInfinite(i: Int, points: ArrayList<Double>, vx0: Double, vy0: Double, vxn: Double, vyn: Double): ArrayList<Double>? {
         var pts = ArrayList<Double>(points)
-        var p: Delaunator.PointD? = null
+        var p: PointD? = null
 
         p = project(pts[0], pts[1], vx0, vy0)
         if (p != null) {
@@ -751,7 +753,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
         return j
     }
 
-    internal fun project(x0: Double, y0: Double, vx: Double, vy: Double): Delaunator.PointD? {
+    internal fun project(x0: Double, y0: Double, vx: Double, vy: Double): PointD? {
         var t = Double.POSITIVE_INFINITY
         var c = 0.0
         var x = 0.0
@@ -794,7 +796,7 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                 y = y0 + t * vy
             }
         }
-        return Delaunator.PointD(x, y)
+        return PointD(x, y)
     }
 
     internal fun regionCode(x: Double, y: Double): Int {
@@ -855,36 +857,6 @@ class Voronoi(var delaunay: Delaunay, var bound: RectD = RectD(0.0, 0.0, 960.0, 
                 y1 = y
                 c1 = regionCode(x1, y1)
             }
-        }
-    }
-
-    /**
-     * Class for representing bound using double values, the class is same as RectF.
-     * @param left left coordinate of the bound
-     * @param top top coordinate of the bound
-     * @param right right coordinate of the bound
-     * @param bottom bottom coordinate of the bound
-     */
-    data class RectD(var left: Double = 0.0, var top: Double = 0.0, var right: Double = 100.0, var bottom: Double = 50.0) {
-
-        constructor(bound: RectD) : this(bound.left, bound.top, bound.right, bound.bottom)
-
-        /**
-         * Get the width of the bound
-         */
-        fun width(): Double {
-            return right - left
-        }
-
-        /**
-         * Get the height of the bound
-         */
-        fun height(): Double {
-            return bottom - top
-        }
-
-        override fun toString(): String {
-            return "left:$left, top:$top, right:$right, bottom:$bottom"
         }
     }
 

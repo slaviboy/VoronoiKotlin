@@ -6,6 +6,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import com.slaviboy.delaunator.Delaunator
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -21,8 +23,8 @@ class PolygonUnitTest {
      * Class for holding the expected value for the delaunay triangulation from the json file
      */
     class PolygonValues(
-        var coordinates: ArrayList<Double>, var area: Double, var center: Delaunator.PointD,
-        var perimeter: Double, var bound: Voronoi.RectD
+        var coordinates: ArrayList<Double>, var area: Double, var center: PointD,
+        var perimeter: Double, var bound: RectD
     )
 
     @Test

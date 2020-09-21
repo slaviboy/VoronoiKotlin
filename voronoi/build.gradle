@@ -50,5 +50,6 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.2"
 
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.github.slaviboy:DelaunatorKotlin:v.0.1.1'
+    implementation 'com.github.slaviboy:DelaunatorKotlin:0.2.0'
+    implementation 'com.github.slaviboy:GraphicsKotlin:0.1.0'
 }

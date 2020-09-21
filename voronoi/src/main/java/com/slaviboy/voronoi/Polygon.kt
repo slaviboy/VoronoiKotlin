@@ -16,7 +16,9 @@
 */
 package com.slaviboy.voronoi
 
-import com.slaviboy.delaunator.Delaunator.PointD
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
+
 
 /**
  * Simple class for holding polygon point values as array list with (x,y coordinate pairs) for
@@ -91,7 +93,7 @@ data class Polygon(var coordinates: ArrayList<Double> = ArrayList()) {
     /**
      * Get the boundary box of current polygon
      */
-    fun bound(): Voronoi.RectD {
+    fun bound(): RectD {
         return Polygon.bound(coordinates)
     }
 
@@ -233,7 +235,7 @@ data class Polygon(var coordinates: ArrayList<Double> = ArrayList()) {
          * as a RectD object.
          * @param coordinates array with coordinates of the polygon points
          */
-        fun bound(coordinates: ArrayList<Double>): Voronoi.RectD {
+        fun bound(coordinates: ArrayList<Double>): RectD {
 
             var left = Double.MAX_VALUE
             var rights = Double.MIN_VALUE
@@ -258,7 +260,7 @@ data class Polygon(var coordinates: ArrayList<Double> = ArrayList()) {
                 }
             }
 
-            return Voronoi.RectD(left, top, rights, bottom)
+            return RectD(left, top, rights, bottom)
         }
     }
 }

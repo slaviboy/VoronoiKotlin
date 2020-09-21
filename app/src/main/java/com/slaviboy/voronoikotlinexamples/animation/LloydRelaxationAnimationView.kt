@@ -20,8 +20,9 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.SurfaceView
-import com.slaviboy.delaunator.Delaunator.PointD
+import android.view.SurfaceView 
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import com.slaviboy.voronoi.Delaunay
 import com.slaviboy.voronoi.Polygon
 import com.slaviboy.voronoi.Voronoi
@@ -74,7 +75,7 @@ class LloydRelaxationAnimationView : SurfaceView, AnimationThread.OnThreadCallLi
     private fun initVoronoi() {
 
         // generate delaunay and voronoi objects
-        voronoi = Voronoi(Delaunay(*coordinates), Voronoi.RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
+        voronoi = Voronoi(Delaunay(*coordinates), RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
         invalidate()
     }
 
@@ -107,7 +108,7 @@ class LloydRelaxationAnimationView : SurfaceView, AnimationThread.OnThreadCallLi
 
         // reset the voronoi
         if (::voronoi.isInitialized) {
-            voronoi = Voronoi(Delaunay(*coordinates), Voronoi.RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
+            voronoi = Voronoi(Delaunay(*coordinates), RectD(0.0, 0.0, width.toDouble(), height.toDouble()))
         }
 
         // start thread

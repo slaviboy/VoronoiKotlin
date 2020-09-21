@@ -6,12 +6,12 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
-import com.slaviboy.voronoi.Voronoi.RectD
+import com.slaviboy.graphics.PointD
+import com.slaviboy.graphics.RectD
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import com.slaviboy.delaunator.Delaunator.PointD
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
